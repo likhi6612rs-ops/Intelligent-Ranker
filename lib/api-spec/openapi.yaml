@@ -2,15 +2,13 @@ openapi: 3.1.0
 info:
   title: Api
   version: 0.1.0
-  description: Candidate Ranking Dashboard API
+  description: TalentLens Candidate Ranking API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
-  - name: candidates
-    description: Candidate profile operations
   - name: ranking
     description: AI ranking engine operations
 paths:
@@ -19,7 +17,6 @@ paths:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -28,55 +25,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
-  /candidates:
-    get:
-      operationId: getCandidates
-      tags: [candidates]
-      summary: Get all candidates
-      description: Returns all candidate profiles in the data store
-      responses:
-        "200":
-          description: List of candidates
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Candidate"
-
-  /candidates/{id}:
-    get:
-      operationId: getCandidate
-      tags: [candidates]
-      summary: Get a single candidate by ID
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Candidate profile
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Candidate"
-        "404":
-          description: Not found
-
   /ranking/analyze:
     post:
-      operationId: analyzeJobDescription
+      operationId: analyzeResumes
       tags: [ranking]
-      summary: Analyze a job description and rank candidates
-      description: Runs hybrid TF-IDF + BM25 + semantic scoring to rank candidates against a job description
+      summary: Parse uploaded resumes and rank against a job description
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RankingInput"
+              $ref: "#/components/schemas/AnalyzeInput"
       responses:
         "200":
           description: Ranked candidates with fit scores and recruiter insights
@@ -84,29 +43,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/RankingResult"
-
-  /ranking/stats:
-    get:
-      operationId: getRankingStats
-      tags: [ranking]
-      summary: Get aggregate stats about the candidate pool
-      responses:
-        "200":
-          description: Candidate pool statistics
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PoolStats"
+        "400":
+          description: Bad request
 
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
+
+    ResumeInput:
+      type: object
+      required: [filename, text]
+      properties:
+        filename:
+          type: string
+        text:
+          type: string
+
+    AnalyzeInput:
+      type: object
+      required: [resumes, jobDescription]
+      properties:
+        resumes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResumeInput"
+          minItems: 1
+        jobDescription:
+          type: string
+          minLength: 10
 
     CareerEntry:
       type: object
@@ -136,34 +105,9 @@ components:
         growthTrajectory:
           type: string
 
-    PlatformActivity:
+    ParsedCandidate:
       type: object
-      required: [applicationsSubmitted, responseRate, avgTimeToRespond, lastActive]
-      properties:
-        applicationsSubmitted:
-          type: integer
-        responseRate:
-          type: number
-        avgTimeToRespond:
-          type: string
-        lastActive:
-          type: string
-
-    Candidate:
-      type: object
-      required:
-        - id
-        - name
-        - title
-        - location
-        - yearsOfExperience
-        - skills
-        - careerHistory
-        - behavioralSignals
-        - platformActivity
-        - summary
-        - education
-        - industries
+      required: [id, name, title, location, yearsOfExperience, skills, careerHistory, behavioralSignals, summary, education, industries, email]
       properties:
         id:
           type: string
@@ -172,6 +116,8 @@ components:
         title:
           type: string
         location:
+          type: string
+        email:
           type: string
         yearsOfExperience:
           type: integer
@@ -185,8 +131,6 @@ components:
             $ref: "#/components/schemas/CareerEntry"
         behavioralSignals:
           $ref: "#/components/schemas/BehavioralSignals"
-        platformActivity:
-          $ref: "#/components/schemas/PlatformActivity"
         summary:
           type: string
         education:
@@ -196,22 +140,9 @@ components:
           items:
             type: string
 
-    RankingInput:
-      type: object
-      required: [jobDescription]
-      properties:
-        jobDescription:
-          type: string
-          minLength: 10
-
     ScoreBreakdown:
       type: object
-      required:
-        - semantic
-        - keyword
-        - experience
-        - behavioral
-        - overall
+      required: [semantic, keyword, experience, behavioral, overall]
       properties:
         semantic:
           type: number
@@ -226,16 +157,10 @@ components:
 
     RankedCandidate:
       type: object
-      required:
-        - candidate
-        - fitScore
-        - recruiterInsight
-        - scoreBreakdown
-        - matchedSkills
-        - rank
+      required: [candidate, fitScore, recruiterInsight, scoreBreakdown, matchedSkills, rank]
       properties:
         candidate:
-          $ref: "#/components/schemas/Candidate"
+          $ref: "#/components/schemas/ParsedCandidate"
         fitScore:
           type: number
         recruiterInsight:
@@ -265,27 +190,3 @@ components:
           type: array
           items:
             type: string
-
-    PoolStats:
-      type: object
-      required:
-        - totalCandidates
-        - avgYearsExperience
-        - topSkills
-        - industryBreakdown
-        - avgBehavioralScore
-      properties:
-        totalCandidates:
-          type: integer
-        avgYearsExperience:
-          type: number
-        topSkills:
-          type: array
-          items:
-            type: string
-        industryBreakdown:
-          type: object
-          additionalProperties:
-            type: integer
-        avgBehavioralScore:
-          type: number

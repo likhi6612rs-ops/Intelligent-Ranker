@@ -1,0 +1,2 @@
+- [Resume parsing architecture](resume-parser-arch.md) — resumes are parsed heuristically (no LLM); client extracts text from PDF/TXT, server parses text into ParsedCandidate structs
+- [API import paths](api-import-paths.md) — always import from `@workspace/api-client-react` not its src/generated sub-path; sub-path imports cause TS2307 errors in the dashboard

@@ -1,4 +1,4 @@
-import type { Candidate } from "../data/candidates.js";
+import type { ParsedCandidate } from "./resume-parser.js";
 
 // ─── Text Utilities ──────────────────────────────────────────────────────────
 
@@ -12,7 +12,7 @@ const STOP_WORDS = new Set([
   "years","year","experience","role","team","work","working","strong","ability",
   "candidate","candidates","looking","seeking","required","requirements","job",
   "position","company","opportunity","responsibilities","must","should","help",
-  "well","good","great","excellent","excellent","knowledge","understanding"
+  "well","good","great","excellent","knowledge","understanding",
 ]);
 
 function tokenize(text: string): string[] {
@@ -26,7 +26,6 @@ function tokenize(text: string): string[] {
 function termFrequency(tokens: string[]): Map<string, number> {
   const tf = new Map<string, number>();
   for (const t of tokens) tf.set(t, (tf.get(t) ?? 0) + 1);
-  // normalize
   const total = tokens.length || 1;
   tf.forEach((v, k) => tf.set(k, v / total));
   return tf;
@@ -34,15 +33,14 @@ function termFrequency(tokens: string[]): Map<string, number> {
 
 // ─── TF-IDF Cosine Similarity ────────────────────────────────────────────────
 
-function buildCandidateDoc(c: Candidate): string {
-  const parts = [
+function buildCandidateDoc(c: ParsedCandidate): string {
+  return [
     c.title,
     c.summary,
     c.skills.join(" "),
     c.industries.join(" "),
     ...c.careerHistory.map(e => `${e.title} ${e.company} ${e.highlights.join(" ")}`),
-  ];
-  return parts.join(" ");
+  ].join(" ");
 }
 
 function cosineSimilarity(a: Map<string, number>, b: Map<string, number>): number {
@@ -51,7 +49,7 @@ function cosineSimilarity(a: Map<string, number>, b: Map<string, number>): numbe
     magA += v * v;
     if (b.has(k)) dot += v * b.get(k)!;
   });
-  b.forEach(v => magB += v * v);
+  b.forEach(v => (magB += v * v));
   const denom = Math.sqrt(magA) * Math.sqrt(magB);
   return denom === 0 ? 0 : dot / denom;
 }
@@ -61,14 +59,12 @@ function tfidfScore(jdTokens: string[], candidateDoc: string, allDocs: string[])
   const candTF = termFrequency(tokenize(candidateDoc));
   const N = allDocs.length;
 
-  // IDF = log(N / df)
   const idf = new Map<string, number>();
   jdTF.forEach((_, term) => {
     const df = allDocs.filter(doc => doc.toLowerCase().includes(term)).length;
     idf.set(term, Math.log((N + 1) / (df + 1)) + 1);
   });
 
-  // Apply IDF to both
   const jdVec = new Map<string, number>();
   const candVec = new Map<string, number>();
   jdTF.forEach((v, k) => jdVec.set(k, v * (idf.get(k) ?? 1)));
@@ -118,23 +114,21 @@ function extractRequiredYears(jd: string): number | null {
   return null;
 }
 
-function experienceScore(candidate: Candidate, requiredYears: number | null): number {
+function experienceScore(candidate: ParsedCandidate, requiredYears: number | null): number {
   if (requiredYears === null) {
-    // No explicit requirement — score based on seniority keywords in JD
     return 0.6 + Math.min(candidate.yearsOfExperience / 15, 0.4);
   }
   const years = candidate.yearsOfExperience;
   if (years >= requiredYears && years <= requiredYears + 4) return 1.0;
   if (years >= requiredYears - 1 && years < requiredYears) return 0.75;
-  if (years > requiredYears + 4) return 0.85; // overqualified slight penalty
-  // Under required
+  if (years > requiredYears + 4) return 0.85;
   const gap = requiredYears - years;
   return Math.max(0, 1 - gap * 0.15);
 }
 
 // ─── Skill Matching ────────────────────────────────────────────────────────────
 
-function matchSkills(jd: string, candidate: Candidate): string[] {
+function matchSkills(jd: string, candidate: ParsedCandidate): string[] {
   const jdLower = jd.toLowerCase();
   return candidate.skills.filter(skill =>
     jdLower.includes(skill.toLowerCase()) ||
@@ -144,16 +138,13 @@ function matchSkills(jd: string, candidate: Candidate): string[] {
 
 // ─── Behavioral Scoring ────────────────────────────────────────────────────────
 
-function behavioralScore(candidate: Candidate, jd: string): number {
+function behavioralScore(candidate: ParsedCandidate, jd: string): number {
   const s = candidate.behavioralSignals;
-  const jdLower = jd.toLowerCase();
   let base = (s.leadershipScore + s.collaborationScore + s.adaptabilityScore) / 300;
 
-  // Boost for trajectory
   if (s.growthTrajectory === "steep") base += 0.06;
   if (s.growthTrajectory === "steady") base += 0.03;
 
-  // Context-specific boosts
   const isLeadershipRole = /manager|lead|director|head of|principal|staff|vp|chief/i.test(jd);
   if (isLeadershipRole) base += (s.leadershipScore / 100) * 0.1;
 
@@ -166,16 +157,13 @@ function behavioralScore(candidate: Candidate, jd: string): number {
 // ─── Recruiter Insight Generation ─────────────────────────────────────────────
 
 function generateInsight(
-  candidate: Candidate,
+  candidate: ParsedCandidate,
   breakdown: { semantic: number; keyword: number; experience: number; behavioral: number },
   matchedSkills: string[],
   jd: string
 ): string {
   const parts: string[] = [];
-  const overall = breakdown.semantic * 0.35 + breakdown.keyword * 0.30 + breakdown.experience * 0.20 + breakdown.behavioral * 0.15;
-  const score = Math.round(overall * 100);
 
-  // Lead with what drives the match
   if (breakdown.semantic > 0.65) {
     const topDomain = candidate.industries[0] ?? "this domain";
     parts.push(
@@ -184,7 +172,7 @@ function generateInsight(
   } else if (breakdown.keyword > 0.7) {
     const top3 = matchedSkills.slice(0, 3).join(", ");
     parts.push(
-      `Direct keyword match on core requirements (${top3}) is very high, indicating ${candidate.name} has explicitly worked with the technologies and methodologies you're asking for.`
+      `Direct keyword match on core requirements${top3 ? ` (${top3})` : ""} is very high, indicating ${candidate.name} has explicitly worked with the technologies and methodologies you're asking for.`
     );
   } else {
     parts.push(
@@ -192,7 +180,6 @@ function generateInsight(
     );
   }
 
-  // Experience fit
   const years = candidate.yearsOfExperience;
   const reqYears = extractRequiredYears(jd);
   if (reqYears && Math.abs(years - reqYears) <= 2) {
@@ -202,43 +189,24 @@ function generateInsight(
   } else if (reqYears && years < reqYears) {
     parts.push(`They're ${reqYears - years} year${reqYears - years > 1 ? "s" : ""} short of the stated requirement — but their trajectory suggests they're punching above their experience level.`);
   } else {
-    parts.push(`Their ${years} years of hands-on experience are distributed across companies where the craft bar is genuinely high.`);
+    parts.push(`Their ${years} years of hands-on experience span meaningful environments.`);
   }
 
-  // Behavioral / behavioral standout
   const sig = candidate.behavioralSignals;
-  const topBehavior = (() => {
-    const scores = {
-      leadership: sig.leadershipScore,
-      collaboration: sig.collaborationScore,
-      adaptability: sig.adaptabilityScore
-    };
-    return Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
-  })();
-
-  if (topBehavior[1] >= 88) {
-    const behaviorLabel = topBehavior[0] === "leadership"
-      ? "leadership signal"
-      : topBehavior[0] === "collaboration"
-      ? "cross-functional effectiveness"
-      : "adaptability to new environments";
-    parts.push(`Notably strong ${behaviorLabel} (${topBehavior[1]}/100) — a differentiator at this level.`);
+  const scores = { leadership: sig.leadershipScore, collaboration: sig.collaborationScore, adaptability: sig.adaptabilityScore };
+  const topBehavior = Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
+  if (topBehavior[1] >= 80) {
+    const label = topBehavior[0] === "leadership" ? "leadership signal" : topBehavior[0] === "collaboration" ? "cross-functional effectiveness" : "adaptability to new environments";
+    parts.push(`Notably strong ${label} (${topBehavior[1]}/100) — a differentiator at this level.`);
   }
 
-  // Growth trajectory
-  if (sig.growthTrajectory === "steep" && score >= 70) {
+  if (sig.growthTrajectory === "steep") {
     parts.push(`Their growth trajectory is steep — they've consistently taken on more scope at each stage, which suggests headroom beyond the immediate role.`);
   }
 
-  // Platform signal
-  if (candidate.platformActivity.responseRate === 100) {
-    parts.push(`Highly responsive on platform — ${candidate.platformActivity.avgTimeToRespond} average response time, signaling active intent.`);
-  }
-
-  // Career pedigree highlight
   const topCompany = candidate.careerHistory[0]?.company;
-  if (topCompany) {
-    parts.push(`Current role at ${topCompany} adds credibility — it's a high-bar environment that filters for quality.`);
+  if (topCompany && topCompany !== "Company" && topCompany !== "Previous Employer") {
+    parts.push(`Most recent role at ${topCompany} adds credibility to their profile.`);
   }
 
   return parts.join(" ");
@@ -247,7 +215,7 @@ function generateInsight(
 // ─── Main Ranking Function ─────────────────────────────────────────────────────
 
 export interface RankedCandidate {
-  candidate: Candidate;
+  candidate: ParsedCandidate;
   fitScore: number;
   recruiterInsight: string;
   scoreBreakdown: {
@@ -261,14 +229,15 @@ export interface RankedCandidate {
   rank: number;
 }
 
-export function rankCandidates(jobDescription: string, candidates: Candidate[]): RankedCandidate[] {
+export function rankCandidates(jobDescription: string, candidates: ParsedCandidate[]): RankedCandidate[] {
+  if (candidates.length === 0) return [];
+
   const jdTokens = tokenize(jobDescription);
   const allDocs = candidates.map(buildCandidateDoc);
   const avgDocLen = allDocs.reduce((sum, d) => sum + tokenize(d).length, 0) / allDocs.length;
   const requiredYears = extractRequiredYears(jobDescription);
 
-  // Compute raw BM25 scores for normalization
-  const rawBm25 = candidates.map((c, i) => bm25Score(jdTokens, allDocs[i], avgDocLen));
+  const rawBm25 = candidates.map((_, i) => bm25Score(jdTokens, allDocs[i], avgDocLen));
   const maxBm25 = Math.max(...rawBm25, 1);
 
   const scored = candidates.map((candidate, i) => {
@@ -282,8 +251,6 @@ export function rankCandidates(jobDescription: string, candidates: Candidate[]):
     const overall = semantic * 0.35 + keyword * 0.30 + experience * 0.20 + behavioral * 0.15;
 
     const matchedSkills = matchSkills(jobDescription, candidate);
-
-    // Skill bonus
     const skillBonus = Math.min(matchedSkills.length * 0.018, 0.12);
     const finalScore = Math.min(overall + skillBonus, 1.0);
 
@@ -295,12 +262,7 @@ export function rankCandidates(jobDescription: string, candidates: Candidate[]):
       overall: Math.round(finalScore * 100),
     };
 
-    const recruiterInsight = generateInsight(candidate, {
-      semantic,
-      keyword,
-      experience,
-      behavioral,
-    }, matchedSkills, jobDescription);
+    const recruiterInsight = generateInsight(candidate, { semantic, keyword, experience, behavioral }, matchedSkills, jobDescription);
 
     return {
       candidate,
@@ -312,45 +274,8 @@ export function rankCandidates(jobDescription: string, candidates: Candidate[]):
     };
   });
 
-  // Sort and assign ranks
   scored.sort((a, b) => b.fitScore - a.fitScore);
   scored.forEach((s, i) => { s.rank = i + 1; });
 
   return scored;
-}
-
-export function getPoolStats(candidates: Candidate[]) {
-  const totalCandidates = candidates.length;
-  const avgYearsExperience = candidates.reduce((s, c) => s + c.yearsOfExperience, 0) / totalCandidates;
-
-  // Top skills by frequency
-  const skillCount = new Map<string, number>();
-  for (const c of candidates) {
-    for (const s of c.skills) skillCount.set(s, (skillCount.get(s) ?? 0) + 1);
-  }
-  const topSkills = [...skillCount.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(e => e[0]);
-
-  // Industry breakdown
-  const industryBreakdown: Record<string, number> = {};
-  for (const c of candidates) {
-    for (const ind of c.industries) {
-      industryBreakdown[ind] = (industryBreakdown[ind] ?? 0) + 1;
-    }
-  }
-
-  const avgBehavioralScore = candidates.reduce((s, c) => {
-    const avg = (c.behavioralSignals.leadershipScore + c.behavioralSignals.collaborationScore + c.behavioralSignals.adaptabilityScore) / 3;
-    return s + avg;
-  }, 0) / totalCandidates;
-
-  return {
-    totalCandidates,
-    avgYearsExperience: Math.round(avgYearsExperience * 10) / 10,
-    topSkills,
-    industryBreakdown,
-    avgBehavioralScore: Math.round(avgBehavioralScore * 10) / 10,
-  };
 }
