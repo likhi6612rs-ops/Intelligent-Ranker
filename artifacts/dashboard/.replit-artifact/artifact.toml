@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "Candidate Ranking Dashboard"
+title = "TalentLens"
 version = "1.0.0"
 id = "artifacts/dashboard"
 router = "path"
