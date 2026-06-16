@@ -7,9 +7,8 @@
  */
 
 export interface ScoreBreakdown {
-  semantic: number;
-  keyword: number;
-  experience: number;
-  behavioral: number;
+  skillsMatch: number;
+  experienceRelevance: number;
+  experienceDuration: number;
   overall: number;
 }

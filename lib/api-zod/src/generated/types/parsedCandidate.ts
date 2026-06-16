@@ -15,6 +15,8 @@ export interface ParsedCandidate {
   location: string;
   email: string;
   yearsOfExperience: number;
+  yearsOfExperiencePrecise: number;
+  isEntryLevel: boolean;
   skills: string[];
   careerHistory: CareerEntry[];
   behavioralSignals: BehavioralSignals;

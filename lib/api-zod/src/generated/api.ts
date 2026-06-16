@@ -41,6 +41,8 @@ export const AnalyzeResumesResponse = zod.object({
   "location": zod.string(),
   "email": zod.string(),
   "yearsOfExperience": zod.number(),
+  "yearsOfExperiencePrecise": zod.number(),
+  "isEntryLevel": zod.boolean(),
   "skills": zod.array(zod.string()),
   "careerHistory": zod.array(zod.object({
   "title": zod.string(),
@@ -61,10 +63,9 @@ export const AnalyzeResumesResponse = zod.object({
   "fitScore": zod.number(),
   "recruiterInsight": zod.string(),
   "scoreBreakdown": zod.object({
-  "semantic": zod.number(),
-  "keyword": zod.number(),
-  "experience": zod.number(),
-  "behavioral": zod.number(),
+  "skillsMatch": zod.number(),
+  "experienceRelevance": zod.number(),
+  "experienceDuration": zod.number(),
   "overall": zod.number()
 }),
   "matchedSkills": zod.array(zod.string()),

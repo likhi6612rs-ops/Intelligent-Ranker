@@ -107,7 +107,7 @@ components:
 
     ParsedCandidate:
       type: object
-      required: [id, name, title, location, yearsOfExperience, skills, careerHistory, behavioralSignals, summary, education, industries, email]
+      required: [id, name, title, location, yearsOfExperience, yearsOfExperiencePrecise, isEntryLevel, skills, careerHistory, behavioralSignals, summary, education, industries, email]
       properties:
         id:
           type: string
@@ -121,6 +121,10 @@ components:
           type: string
         yearsOfExperience:
           type: integer
+        yearsOfExperiencePrecise:
+          type: number
+        isEntryLevel:
+          type: boolean
         skills:
           type: array
           items:
@@ -142,15 +146,13 @@ components:
 
     ScoreBreakdown:
       type: object
-      required: [semantic, keyword, experience, behavioral, overall]
+      required: [skillsMatch, experienceRelevance, experienceDuration, overall]
       properties:
-        semantic:
+        skillsMatch:
           type: number
-        keyword:
+        experienceRelevance:
           type: number
-        experience:
-          type: number
-        behavioral:
+        experienceDuration:
           type: number
         overall:
           type: number

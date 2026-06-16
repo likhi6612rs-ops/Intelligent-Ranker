@@ -42,6 +42,8 @@ export interface ParsedCandidate {
   location: string;
   email: string;
   yearsOfExperience: number;
+  yearsOfExperiencePrecise: number;
+  isEntryLevel: boolean;
   skills: string[];
   careerHistory: CareerEntry[];
   behavioralSignals: BehavioralSignals;
@@ -51,10 +53,9 @@ export interface ParsedCandidate {
 }
 
 export interface ScoreBreakdown {
-  semantic: number;
-  keyword: number;
-  experience: number;
-  behavioral: number;
+  skillsMatch: number;
+  experienceRelevance: number;
+  experienceDuration: number;
   overall: number;
 }
 
