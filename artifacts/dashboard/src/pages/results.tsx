@@ -8,6 +8,7 @@ import { LoadingStages } from "@/components/loading-stages";
 import { useSession } from "@/context/session";
 import { useAnalyzeResumes } from "@workspace/api-client-react";
 import type { RankedCandidate } from "@workspace/api-client-react";
+import { AuroraShaderBackground } from "@/components/ui/aurora-shader-background";
 
 // ─── Weighted bar — shows weight label + score ────────────────────────────────
 
@@ -369,6 +370,7 @@ export function ResultsPage() {
         {/* Results */}
         {results && !isAnalyzing && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+            <AuroraShaderBackground />
 
             {/* Stats bar */}
             <div className="flex flex-wrap items-center gap-5 text-sm py-4 border-b border-white/5">

@@ -75,6 +75,8 @@
     "zod": "catalog:"
   },
   "dependencies": {
-    "pdfjs-dist": "^6.0.227"
+    "@types/three": "^0.184.1",
+    "pdfjs-dist": "^6.0.227",
+    "three": "^0.184.0"
   }
 }
