@@ -14,11 +14,35 @@ export interface ResumeInput {
   text: string;
 }
 
+export interface ScoringWeights {
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  skillsMatch: number;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  experienceRelevance: number;
+  /**
+     * @minimum 0
+     * @maximum 100
+     */
+  experienceDuration: number;
+}
+
 export interface AnalyzeInput {
   /** @minItems 1 */
   resumes: ResumeInput[];
   /** @minLength 10 */
   jobDescription: string;
+  weights?: ScoringWeights;
+}
+
+export interface ValidationErrorResponse {
+  error: string;
+  code: string;
 }
 
 export interface CareerEntry {

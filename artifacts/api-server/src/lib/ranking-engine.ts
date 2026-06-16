@@ -277,23 +277,41 @@ export interface RankedCandidate {
   rank: number;
 }
 
-export function rankCandidates(jobDescription: string, candidates: ParsedCandidate[]): RankedCandidate[] {
+export interface ScoringWeights {
+  skillsMatch: number;       // e.g. 50
+  experienceRelevance: number; // e.g. 30
+  experienceDuration: number;  // e.g. 20
+}
+
+const DEFAULT_WEIGHTS: ScoringWeights = { skillsMatch: 50, experienceRelevance: 30, experienceDuration: 20 };
+
+export function rankCandidates(
+  jobDescription: string,
+  candidates: ParsedCandidate[],
+  weights: ScoringWeights = DEFAULT_WEIGHTS,
+): RankedCandidate[] {
   if (candidates.length === 0) return [];
+
+  // Normalize weights to fractions that sum to 1
+  const total = weights.skillsMatch + weights.experienceRelevance + weights.experienceDuration;
+  const wSM = total > 0 ? weights.skillsMatch / total : 0.50;
+  const wER = total > 0 ? weights.experienceRelevance / total : 0.30;
+  const wED = total > 0 ? weights.experienceDuration / total : 0.20;
 
   const requiredYears = extractRequiredYears(jobDescription);
 
   const scored = candidates.map((candidate, i) => {
-    // 1. Skills Match (50%)
+    // 1. Skills Match
     const { score: smRaw, matched: matchedSkills, jdSkills } = skillsMatchScore(jobDescription, candidate);
 
-    // 2. Experience Relevance (30%)
+    // 2. Experience Relevance
     const erRaw = experienceRelevanceScore(jobDescription, candidates, i);
 
-    // 3. Experience Duration (20%)
+    // 3. Experience Duration
     const edResult = experienceDurationScore(candidate, requiredYears);
 
-    // Weighted overall: 50 + 30 + 20
-    const overall = Math.round(smRaw * 0.50 + erRaw * 0.30 + edResult.score * 0.20);
+    // Weighted overall using recruiter-configured weights
+    const overall = Math.round(smRaw * wSM + erRaw * wER + edResult.score * wED);
 
     const scoreBreakdown = {
       skillsMatch: smRaw,

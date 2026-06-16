@@ -1,0 +1,27 @@
+1. Updated System Prompt (Robust Validation)
+This prompt now includes a "Guardrail" to ensure the AI only processes valid job descriptions."You are an Expert Talent Acquisition Assistant.
+Step 1: Validation (Mandatory)
+Before processing, analyze the 'Job Description' input.
+Check: Does this text contain clear job titles, responsibilities, or qualification requirements?
+Action: If the input is not a legitimate job description (e.g., just a job title or random text), output: 'Invalid Job Description provided. Please provide a full description including qualifications.' and stop processing.
+Step 2: Recruiter Priorities
+(Include the High/Medium/Low priority logic we defined earlier).
+Step 3: Multi-Candidate Processing
+You will be provided with multiple resumes. Process each one independently and return them in a single aggregated table.
+Step 4: Output Table
+Candidate NameSkills MatchExp. RelevanceExp. DurationTotal ScoreFeedback
+[Name 1][0-100][0-100][0-100][Avg][e.g., 'Strong match for Python']
+[Name 2][0-100][0-100][0-100][Avg][e.g., 'No prior experience']
+[Name 3][0-100][0-100][0-100]
+2. Improving the User Workflow (Batch Processing)
+To make it fast for the recruiter as you suggested, you don't need to change the AI prompt, but you do need to change the Frontend logic:
+HTML Input Attribute: In your file upload input, make sure to add the multiple attribute.
+Code example: <input type="file" id="resumeUpload" multiple>
+Batch Request Strategy: Instead of sending one request per resume, you can package the text of all uploaded resumes into one single JSON array and send it to your AI model in one single API call. This will make the app feel "instant" and very professional.
+Progress UI: Since you are processing multiple files, add a "Processing..." loader that shows "Analyzing 3 of 3 resumes..." so the recruiter knows the system is working.
+3. Summary of Improvements for your Hackathon Demo
+IssueOld ExperienceNew Experience
+Input ValidationAccepted any text as a job.Rejects non-job descriptions with a clear warning.
+Resume UploadOne at a time (slow).Batch upload (fast, multiple files at once).
+AccuracyGuesses experience.States "No prior work experience" if missing.
+ControlFixed evaluation logic.Recruiter sets priorities (Weightage).

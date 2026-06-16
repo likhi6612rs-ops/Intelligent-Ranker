@@ -22,7 +22,8 @@ import type {
 import type {
   AnalyzeInput,
   HealthStatus,
-  RankingResult
+  RankingResult,
+  ValidationErrorResponse
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -140,7 +141,7 @@ export const analyzeResumes = async (analyzeInput: AnalyzeInput, options?: Reque
 
 
 
-export const getAnalyzeResumesMutationOptions = <TError = ErrorType<void>,
+export const getAnalyzeResumesMutationOptions = <TError = ErrorType<void | ValidationErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof analyzeResumes>>, TError,{data: BodyType<AnalyzeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof analyzeResumes>>, TError,{data: BodyType<AnalyzeInput>}, TContext> => {
 
@@ -169,12 +170,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type AnalyzeResumesMutationResult = NonNullable<Awaited<ReturnType<typeof analyzeResumes>>>
     export type AnalyzeResumesMutationBody = BodyType<AnalyzeInput>
-    export type AnalyzeResumesMutationError = ErrorType<void>
+    export type AnalyzeResumesMutationError = ErrorType<void | ValidationErrorResponse>
 
     /**
  * @summary Parse uploaded resumes and rank against a job description
  */
-export const useAnalyzeResumes = <TError = ErrorType<void>,
+export const useAnalyzeResumes = <TError = ErrorType<void | ValidationErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof analyzeResumes>>, TError,{data: BodyType<AnalyzeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof analyzeResumes>>,

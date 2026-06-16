@@ -22,6 +22,15 @@ export const HealthCheckResponse = zod.object({
 
 export const analyzeResumesBodyJobDescriptionMin = 10;
 
+export const analyzeResumesBodyWeightsSkillsMatchMin = 0;
+export const analyzeResumesBodyWeightsSkillsMatchMax = 100;
+
+export const analyzeResumesBodyWeightsExperienceRelevanceMin = 0;
+export const analyzeResumesBodyWeightsExperienceRelevanceMax = 100;
+
+export const analyzeResumesBodyWeightsExperienceDurationMin = 0;
+export const analyzeResumesBodyWeightsExperienceDurationMax = 100;
+
 
 
 export const AnalyzeResumesBody = zod.object({
@@ -29,7 +38,12 @@ export const AnalyzeResumesBody = zod.object({
   "filename": zod.string(),
   "text": zod.string()
 })).min(1),
-  "jobDescription": zod.string().min(analyzeResumesBodyJobDescriptionMin)
+  "jobDescription": zod.string().min(analyzeResumesBodyJobDescriptionMin),
+  "weights": zod.object({
+  "skillsMatch": zod.number().min(analyzeResumesBodyWeightsSkillsMatchMin).max(analyzeResumesBodyWeightsSkillsMatchMax),
+  "experienceRelevance": zod.number().min(analyzeResumesBodyWeightsExperienceRelevanceMin).max(analyzeResumesBodyWeightsExperienceRelevanceMax),
+  "experienceDuration": zod.number().min(analyzeResumesBodyWeightsExperienceDurationMin).max(analyzeResumesBodyWeightsExperienceDurationMax)
+}).optional()
 })
 
 export const AnalyzeResumesResponse = zod.object({

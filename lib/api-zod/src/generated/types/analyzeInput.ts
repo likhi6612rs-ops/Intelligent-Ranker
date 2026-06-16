@@ -6,10 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ResumeInput } from './resumeInput';
+import type { ScoringWeights } from './scoringWeights';
 
 export interface AnalyzeInput {
   /** @minItems 1 */
   resumes: ResumeInput[];
   /** @minLength 10 */
   jobDescription: string;
+  weights?: ScoringWeights;
 }

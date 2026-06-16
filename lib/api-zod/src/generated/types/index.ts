@@ -15,3 +15,5 @@ export * from './rankedCandidate';
 export * from './rankingResult';
 export * from './resumeInput';
 export * from './scoreBreakdown';
+export * from './scoringWeights';
+export * from './validationErrorResponse';

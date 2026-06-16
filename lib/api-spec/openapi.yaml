@@ -45,6 +45,12 @@ paths:
                 $ref: "#/components/schemas/RankingResult"
         "400":
           description: Bad request
+        "422":
+          description: Invalid job description
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
 
 components:
   schemas:
@@ -64,6 +70,23 @@ components:
         text:
           type: string
 
+    ScoringWeights:
+      type: object
+      required: [skillsMatch, experienceRelevance, experienceDuration]
+      properties:
+        skillsMatch:
+          type: number
+          minimum: 0
+          maximum: 100
+        experienceRelevance:
+          type: number
+          minimum: 0
+          maximum: 100
+        experienceDuration:
+          type: number
+          minimum: 0
+          maximum: 100
+
     AnalyzeInput:
       type: object
       required: [resumes, jobDescription]
@@ -76,6 +99,17 @@ components:
         jobDescription:
           type: string
           minLength: 10
+        weights:
+          $ref: "#/components/schemas/ScoringWeights"
+
+    ValidationErrorResponse:
+      type: object
+      required: [error, code]
+      properties:
+        error:
+          type: string
+        code:
+          type: string
 
     CareerEntry:
       type: object
