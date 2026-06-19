@@ -191,9 +191,18 @@ components:
         overall:
           type: number
 
+    GapAnalysisItem:
+      type: object
+      required: [skill, probeQuestion]
+      properties:
+        skill:
+          type: string
+        probeQuestion:
+          type: string
+
     RankedCandidate:
       type: object
-      required: [candidate, fitScore, recruiterInsight, scoreBreakdown, matchedSkills, rank]
+      required: [candidate, fitScore, recruiterInsight, scoreBreakdown, matchedSkills, rank, justification, gapAnalysis, interviewQuestions]
       properties:
         candidate:
           $ref: "#/components/schemas/ParsedCandidate"
@@ -201,6 +210,16 @@ components:
           type: number
         recruiterInsight:
           type: string
+        justification:
+          type: string
+        gapAnalysis:
+          type: array
+          items:
+            $ref: "#/components/schemas/GapAnalysisItem"
+        interviewQuestions:
+          type: array
+          items:
+            type: string
         scoreBreakdown:
           $ref: "#/components/schemas/ScoreBreakdown"
         matchedSkills:

@@ -76,6 +76,12 @@ export const AnalyzeResumesResponse = zod.object({
 }),
   "fitScore": zod.number(),
   "recruiterInsight": zod.string(),
+  "justification": zod.string(),
+  "gapAnalysis": zod.array(zod.object({
+  "skill": zod.string(),
+  "probeQuestion": zod.string()
+})),
+  "interviewQuestions": zod.array(zod.string()),
   "scoreBreakdown": zod.object({
   "skillsMatch": zod.number(),
   "experienceRelevance": zod.number(),

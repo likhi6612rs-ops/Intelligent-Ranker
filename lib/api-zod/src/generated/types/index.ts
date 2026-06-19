@@ -9,6 +9,7 @@
 export * from './analyzeInput';
 export * from './behavioralSignals';
 export * from './careerEntry';
+export * from './gapAnalysisItem';
 export * from './healthStatus';
 export * from './parsedCandidate';
 export * from './rankedCandidate';

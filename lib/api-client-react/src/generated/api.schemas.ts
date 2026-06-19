@@ -83,10 +83,18 @@ export interface ScoreBreakdown {
   overall: number;
 }
 
+export interface GapAnalysisItem {
+  skill: string;
+  probeQuestion: string;
+}
+
 export interface RankedCandidate {
   candidate: ParsedCandidate;
   fitScore: number;
   recruiterInsight: string;
+  justification: string;
+  gapAnalysis: GapAnalysisItem[];
+  interviewQuestions: string[];
   scoreBreakdown: ScoreBreakdown;
   matchedSkills: string[];
   rank: number;

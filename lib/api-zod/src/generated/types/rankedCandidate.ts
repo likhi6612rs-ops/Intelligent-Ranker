@@ -5,6 +5,7 @@
  * TalentLens Candidate Ranking API
  * OpenAPI spec version: 0.1.0
  */
+import type { GapAnalysisItem } from './gapAnalysisItem';
 import type { ParsedCandidate } from './parsedCandidate';
 import type { ScoreBreakdown } from './scoreBreakdown';
 
@@ -12,6 +13,9 @@ export interface RankedCandidate {
   candidate: ParsedCandidate;
   fitScore: number;
   recruiterInsight: string;
+  justification: string;
+  gapAnalysis: GapAnalysisItem[];
+  interviewQuestions: string[];
   scoreBreakdown: ScoreBreakdown;
   matchedSkills: string[];
   rank: number;
